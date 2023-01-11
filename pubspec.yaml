@@ -1,0 +1,73 @@
+name: dioldifi
+description: A new Flutter project.
+
+publish_to: 'none' 
+
+
+version: 1.0.1+1
+
+environment:
+  sdk: '>=2.18.5 <3.0.0'
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: any
+  provider: any
+  easy_localization: any
+  image_picker: any
+  video_player: any
+  permission_handler: any
+  flutter_easyloading: any
+  path_provider: any
+  video_trimmer: any
+  connectivity_plus: any
+  phosphor_flutter: any
+  flutter_painter: any
+  cached_network_image: any
+  lottie: any
+  photo_manager: any
+  image_cropper: any
+  url_launcher: any
+  gallery_saver: any
+  video_thumbnail: 0.5.0
+  share_plus: ^6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+  flutter_lints: ^2.0.0
+
+
+flutter:
+
+  uses-material-design: true
+
+
+  assets:
+    - assets/flags/
+    - assets/images/
+    - assets/translations/
+    - assets/frames/
+ 
+  fonts:
+    - family: trajan
+      fonts:
+        - asset: assets/fonts/Trajan Pro.ttf
+    - family: trajanbold
+      fonts:
+        - asset: assets/fonts/TrajanPro-Bold.otf  
+    - family: trajanregular
+      fonts:
+        - asset: assets/fonts/TrajanPro-Regular.ttf  
+    - family: poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Medium.ttf
+    - family: inter
+      fonts:
+        - asset: assets/fonts/Inter-Medium.ttf             
+
