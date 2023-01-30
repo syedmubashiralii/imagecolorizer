@@ -22,7 +22,6 @@ dependencies:
   permission_handler: any
   flutter_easyloading: any
   path_provider: any
-  video_trimmer: any
   connectivity_plus: any
   phosphor_flutter: any
   flutter_painter: any
@@ -33,7 +32,17 @@ dependencies:
   url_launcher: any
   gallery_saver: any
   video_thumbnail: 0.5.0
-  share_plus: ^6.3.0
+  share_plus: any
+  firebase_auth: any
+  shared_preferences: any
+  cloud_firestore: any
+  google_mobile_ads: any
+  firebase_crashlytics: any
+  firebase_analytics: any
+  google_fonts: any
+  photofilters: any
+  in_app_purchase: any
+  modal_bottom_sheet: any
 
 dev_dependencies:
   flutter_test:
@@ -53,6 +62,7 @@ flutter:
     - assets/images/
     - assets/translations/
     - assets/frames/
+    - assets/json/
  
   fonts:
     - family: trajan

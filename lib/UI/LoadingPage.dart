@@ -121,7 +121,10 @@ class _LoadingPageState extends State<LoadingPage> {
                   child: Row(
                     children: [
                       InkWell(
-                        onTap: () async {},
+                        onTap: () async {
+                          launchUrl(Uri.parse(
+                              "https://play.google.com/store/apps/details?id=com.appexsoft.sketching.pencilsketch"));
+                        },
                         child: Container(
                           height: h * .2,
                           width: w * .45,
@@ -151,7 +154,10 @@ class _LoadingPageState extends State<LoadingPage> {
                 ),
                 Center(
                   child: InkWell(
-                    onTap: () async {},
+                    onTap: () async {
+                      launchUrl(Uri.parse(
+                          "https://play.google.com/store/apps/details?id=com.appexsoft.zoomgrid.photo.enhance"));
+                    },
                     child: Container(
                       height: h * .23,
                       width: w * .57,
