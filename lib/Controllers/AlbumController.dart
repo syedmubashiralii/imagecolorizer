@@ -8,9 +8,11 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 class MyAlbumController extends ChangeNotifier {
   bool isloading = true;
   var dir2;
+  var dir;
   var ImagesPath;
+  var videospath;
   List allimageslist = [];
-   List videolist = [];
+  List videolist = [];
   getalbum(String folder) async {
     isloading = true;
     notifyListeners();
@@ -35,16 +37,16 @@ class MyAlbumController extends ChangeNotifier {
     isloading = true;
     notifyListeners();
     allimageslist = [];
-   videolist=[];
+    videolist = [];
     var appDir = await getApplicationDocumentsDirectory();
-    dir2 = Directory('${appDir.path}/$folder');
-    ImagesPath = '${appDir.path}/$folder';
-    bool directoryExists = await Directory(ImagesPath).exists();
+    dir = Directory('${appDir.path}/$folder');
+    videospath = '${appDir.path}/$folder';
+    bool directoryExists = await Directory(videospath).exists();
     if (directoryExists) {
-      List<FileSystemEntity> files = dir2!.listSync();
+      List<FileSystemEntity> files = dir!.listSync();
       for (FileSystemEntity f1 in files) {
         allimageslist.add(f1.absolute.path);
-      }
+      } 
       allimageslist = allimageslist.reversed.toList();
       videolist = allimageslist;
       allimageslist = [];

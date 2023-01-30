@@ -1,22 +1,38 @@
+// ignore_for_file: use_build_context_synchronously, library_prefixes, depend_on_referenced_packages
+
 import 'dart:convert';
+import 'package:dioldifi/UI/PhotoFilters.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:path/path.dart' as p;
 import 'dart:developer';
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dioldifi/Controllers/SaveController.dart';
 import 'package:dioldifi/UI/AlbumPage.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:image/image.dart' as imageLib;
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:http/http.dart' as http;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_painter/flutter_painter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:ui' as ui;
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:provider/provider.dart';
+import '../Controllers/Ads_Controller.dart';
+import '../Controllers/CoinsController.dart';
+import '../Controllers/LoginSignUpController.dart';
 import '../Utils/Constants.dart';
-import '../Utils/SaveDialog.dart';
+import '../Utils/InApp.dart';
+import '../Utils/preset_filters.dart';
 
 class ImageEditor extends StatefulWidget {
-  var img;
-  ImageEditor({Key? key, this.img}) : super(key: key);
+  Uint8List img;
+  int coin;
+  ImageEditor({Key? key, required this.img, required this.coin})
+      : super(key: key);
 
   @override
   _ImageEditorState createState() => _ImageEditorState();
@@ -56,9 +72,29 @@ class _ImageEditorState extends State<ImageEditor> {
     }
   }
 
+  getads() {
+    final ads = Provider.of<GetAds>(context, listen: false);
+    ads.EditorPageBanner();
+    if (ads.backint == null) {
+      ads.createBackInterstitialad();
+    }
+    if (ads.albumint == null) {
+      ads.Createalbuminiterstitial();
+    }
+    if (ads.editorint == null) {
+      ads.createeditorint();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Provider.of<coinsController>(context, listen: false).isadfree ==
+          false) {
+        getads();
+      }
+    });
     controller = PainterController(
         settings: PainterSettings(
             text: TextSettings(
@@ -104,269 +140,448 @@ class _ImageEditorState extends State<ImageEditor> {
   Widget buildDefault(BuildContext context) {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
+    final ads = Provider.of<GetAds>(context);
     return WillPopScope(
       onWillPop: () {
         EasyLoading.dismiss();
+        if (Provider.of<coinsController>(context, listen: false).isadfree ==
+            false) {
+          ads.showbackinterstitial();
+        }
         return Future.value(true);
       },
-      child: Container(
-        color: appbarcolor,
-        child: SafeArea(
-          child: Scaffold(
-            appBar: PreferredSize(
-              preferredSize: const Size(double.infinity, kToolbarHeight),
-              child: ValueListenableBuilder<PainterControllerValue>(
-                  valueListenable: controller,
-                  child: Text(
-                    "imageeditor".tr(),
-                    style: const TextStyle(fontFamily: "trajan"),
-                  ),
-                  builder: (context, _, child) {
-                    return Column(
-                      children: [
-                        AppBar(
-                          backgroundColor: appbarcolor,
-                          title: child,
-                          actions: [
-                            // Delete the selected drawable
-                            IconButton(
-                              icon: const Icon(
-                                PhosphorIcons.trash,
-                              ),
-                              onPressed:
-                                  controller.selectedObjectDrawable == null
-                                      ? null
-                                      : removeSelectedDrawable,
+      child: Directionality(
+        textDirection: ui.TextDirection.ltr,
+        child: Container(
+          color: appbarcolor,
+          child: SafeArea(
+            child: Scaffold(
+                appBar: PreferredSize(
+                  preferredSize: Size(double.infinity, h * .18),
+                  child: ValueListenableBuilder<PainterControllerValue>(
+                      valueListenable: controller,
+                      child: Text(
+                        "imageeditor".tr(),
+                        style: const TextStyle(
+                            fontFamily: "trajan",
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 20),
+                      ),
+                      builder: (context, _, child) {
+                        return Column(
+                          children: [
+                            Provider.of<coinsController>(
+                                      context,
+                                    ).isadfree ==
+                                    true
+                                ? SizedBox(
+                                    height: 0,
+                                  )
+                                : Container(
+                                    height: ads.iseditorpagebannerloaded
+                                        ? h * .07
+                                        : h * 0.03,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Colors.black,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                    child: ads.iseditorpagebannerloaded
+                                        ? AdWidget(ad: ads.editorpage)
+                                        : const Center(
+                                            child: Text("Advertisment"),
+                                          )),
+                            AppBar(
+                              leading: IconButton(
+                                  onPressed: () {
+                                    if (Provider.of<coinsController>(context,
+                                                listen: false)
+                                            .isadfree ==
+                                        false) {
+                                      ads.showbackinterstitial();
+                                    }
+                                    Navigator.pop(context);
+                                  },
+                                  icon: const Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.white,
+                                  )),
+                              backgroundColor: appbarcolor,
+                              title: child,
+                              actions: [
+                                // Delete the selected drawable
+                                IconButton(
+                                  icon: const Icon(
+                                    PhosphorIcons.trash,
+                                  ),
+                                  onPressed:
+                                      controller.selectedObjectDrawable == null
+                                          ? null
+                                          : removeSelectedDrawable,
+                                ),
+                                // Container(
+                                //   margin:
+                                //       const EdgeInsets.symmetric(vertical: 8),
+                                //   alignment: Alignment.center,
+                                //   decoration: BoxDecoration(
+                                //       shape: BoxShape.circle,
+                                //       border: Border.all(color: Colors.white)),
+                                //   child: IconButton(
+                                //     icon: const Icon(
+                                //       Icons.share,
+                                //       color: Colors.white,
+                                //     ),
+                                //     onPressed: () {},
+                                //   ),
+                                // ),
+                                Consumer<coinsController>(
+                                    builder: (context, coindata, child) {
+                                  return Container(
+                                    margin:
+                                        const EdgeInsets.symmetric(vertical: 8),
+                                    decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border:
+                                            Border.all(color: Colors.white)),
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Icons.save,
+                                        color: Colors.white,
+                                      ),
+                                      onPressed: () async {
+                                        if (coindata.totalcoins < widget.coin) {
+                                          EasyLoading.showToast(
+                                              "You have'nt enough coins please purchase coins to save your picture",
+                                              duration: Duration(seconds: 2));
+                                          Future.delayed(Duration(seconds: 1),
+                                              () {
+                                            showCupertinoModalBottomSheet(
+                                                expand: false,
+                                                context: context,
+                                                backgroundColor:
+                                                    Colors.transparent,
+                                                builder: (context) => Container(
+                                                    height: h * .4,
+                                                    child: inApp()));
+                                          });
+                                        } else {
+                                          EasyLoading.show();
+                                          coindata.totalcoins -= widget.coin;
+                                          await LoginSignup()
+                                              .UpdateCoins(coindata.totalcoins,
+                                                  context, user!.email!)
+                                              .then((value) =>
+                                                  coindata.updatecoins());
+
+                                          if (coindata.isadfree == false) {
+                                            ads.showalbumint();
+                                          }
+                                          renderAndDisplayImage();
+                                        }
+                                      },
+                                    ),
+                                  );
+                                }),
+                              ],
+                              elevation: 0,
                             ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.save,
-                              ),
-                              onPressed: () {
-                                SomeDialog(
-                                    appName: "appname".tr(),
-                                    context: context,
-                                    path: "assets/images/sparrow.png",
-                                    mode: SomeMode.Asset,
-                                    content: "saveimgdes".tr(),
-                                    title: "saveimg".tr(),
-                                    submit: () {
-                                      renderAndDisplayImage();
-                                    },
-                                    buttonConfig: ButtonConfig(
-                                      buttonCancelColor: Colors.red,
-                                      buttonDoneColor: Colors.green,
-                                      labelCancelColor: Colors.white,
-                                      labelDoneColor: Colors.white,
-                                    ));
-                              },
-                            ),
+                            // Stack(
+                            //   children: [
+                            //     Container(
+                            //       height: h * .01,
+                            //       color: appbarcolor,
+                            //     ),
+                            //     SizedBox(
+                            //       width: double.infinity,
+                            //       child: Image.asset(
+                            //           "assets/images/appbarbottom.png"),
+                            //     ),
+                            //   ],
+                            // ),
                           ],
-                          elevation: 0,
-                        ),
-                      ],
-                    );
-                  }),
-            ),
-            backgroundColor: primarycolor,
-            body: Stack(
-              children: [
-                if (backgroundImage != null)
-                  Positioned.fill(
-                    child: Center(
-                      child: AspectRatio(
-                        aspectRatio:
-                            backgroundImage!.width / backgroundImage!.height,
-                        child: FlutterPainter(
-                          controller: controller,
+                        );
+                      }),
+                ),
+                backgroundColor: primarycolor,
+                body: Stack(
+                  children: [
+                    if (backgroundImage != null)
+                      Positioned.fill(
+                        child: Center(
+                          child: AspectRatio(
+                            aspectRatio: backgroundImage!.width /
+                                backgroundImage!.height,
+                            child: FlutterPainter(
+                              controller: controller,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  left: 0,
-                  child: ValueListenableBuilder(
-                    valueListenable: controller,
-                    builder: (context, _, __) => Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Container(
-                            constraints: const BoxConstraints(
-                              maxWidth: 400,
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 15),
-                            decoration: const BoxDecoration(
-                              borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(20)),
-                              color: Colors.white,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (textFocusNode.hasFocus) ...[
-                                  Align(
-                                    alignment: Alignment.topLeft,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        FocusManager.instance.primaryFocus!
-                                            .unfocus();
-                                      },
-                                      style: ButtonStyle(
-                                        backgroundColor:
-                                            MaterialStateProperty.all(
-                                                appbarcolor),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      left: 0,
+                      child: ValueListenableBuilder(
+                        valueListenable: controller,
+                        builder: (context, _, __) => Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 400,
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 15),
+                                decoration: const BoxDecoration(
+                                  borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(20)),
+                                  color: Colors.white,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (textFocusNode.hasFocus) ...[
+                                      Align(
+                                        alignment: Alignment.topLeft,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            FocusManager.instance.primaryFocus!
+                                                .unfocus();
+                                          },
+                                          style: ButtonStyle(
+                                            backgroundColor:
+                                                MaterialStateProperty.all(
+                                                    appbarcolor),
+                                          ),
+                                          child: const Text("Done"),
+                                        ),
                                       ),
-                                      child: const Text("Done"),
-                                    ),
-                                  ),
-                                  // Control text font size
-                                  Row(
-                                    children: [
-                                      const Expanded(
-                                          flex: 1, child: Text("Font Size")),
-                                      Expanded(
-                                        flex: 3,
-                                        child: Slider.adaptive(
-                                            min: 8,
-                                            max: 96,
-                                            value:
-                                                controller.textStyle.fontSize ??
+                                      // Control text font size
+                                      Row(
+                                        children: [
+                                          const Expanded(
+                                              flex: 1,
+                                              child: Text("Font Size")),
+                                          Expanded(
+                                            flex: 3,
+                                            child: Slider.adaptive(
+                                                min: 8,
+                                                max: 96,
+                                                value: controller
+                                                        .textStyle.fontSize ??
                                                     14,
-                                            onChanged: setTextFontSize),
+                                                onChanged: setTextFontSize),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
 
-                                  // Control text color hue
-                                  Row(
-                                    children: [
-                                      const Expanded(
-                                          flex: 1, child: Text("Color")),
-                                      Expanded(
-                                        flex: 3,
-                                        child: Slider.adaptive(
-                                            min: 0,
-                                            max: 359.99,
-                                            value: HSVColor.fromColor(controller
-                                                        .textStyle.color ??
-                                                    red)
-                                                .hue,
-                                            activeColor:
-                                                controller.textStyle.color,
-                                            onChanged: setTextColor),
+                                      // Control text color hue
+                                      Row(
+                                        children: [
+                                          const Expanded(
+                                              flex: 1, child: Text("Color")),
+                                          Expanded(
+                                            flex: 3,
+                                            child: Slider.adaptive(
+                                                min: 0,
+                                                max: 359.99,
+                                                value: HSVColor.fromColor(
+                                                        controller.textStyle
+                                                                .color ??
+                                                            red)
+                                                    .hue,
+                                                activeColor:
+                                                    controller.textStyle.color,
+                                                onChanged: setTextColor),
+                                          ),
+                                        ],
                                       ),
                                     ],
-                                  ),
-                                ],
-                              ],
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            bottomNavigationBar: Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: w * .08),
-                height: h * .12,
-                width: w * .8,
-                color: primarycolor,
-                child: Stack(
-                  fit: StackFit.expand,
-                  alignment: Alignment.center,
-                  children: [
-                    Image.asset("assets/images/Group 248.png"),
-                    Container(
-                      height: h * .12,
-                      width: w * .8,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onTap: addText,
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 25.0, bottom: 5),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    PhosphorIcons.textT,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                  Text(
-                                    "Text".tr(),
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 15),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: addframes,
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 15.0, bottom: 5),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    PhosphorIcons.frameCorners,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                  Text(
-                                    "Frame".tr(),
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 15),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: addSticker,
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(right: 22.0, bottom: 5),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    PhosphorIcons.smileySticker,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                  Text(
-                                    "Sticker".tr(),
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 15),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
+                bottomNavigationBar: ValueListenableBuilder(
+                    valueListenable: controller,
+                    builder: (context, _, __) => Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            height: h * .08,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(
+                                20,
+                              ),
+                              color: appbarcolor,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                InkWell(
+                                  onTap: () async {
+                                    String filename = '';
+                                    final directory =
+                                        await getApplicationDocumentsDirectory();
+                                    var imageFile = await File(
+                                            '${directory.path}/filters.png')
+                                        .create();
+                                    await imageFile.writeAsBytes(widget.img);
+                                    filename = p.basename(imageFile.path);
+                                    var image = imageLib.decodeImage(
+                                        imageFile.readAsBytesSync());
+                                    image =
+                                        imageLib.copyResize(image!, width: 600);
+                                    Map? imagefile = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            PhotoFilterSelector(
+                                          title: const Text(
+                                            "Photo Filters",
+                                            style: TextStyle(
+                                                fontFamily: "trajan",
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                                fontSize: 20),
+                                          ),
+                                          image: image!,
+                                          appBarColor: appbarcolor,
+                                          filters: presetFiltersList,
+                                          filename: filename,
+                                          loader: const Center(
+                                              child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          )),
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    );
+                                    if (imagefile == null) {
+                                    } else {
+                                      if (imagefile
+                                          .containsKey('image_filtered')) {
+                                        imageFile = imagefile['image_filtered'];
+                                        widget.img =
+                                            await imageFile.readAsBytesSync();
+                                        initBackground();
+                                        print(imageFile.path);
+                                      }
+                                    }
+                                  },
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                          height: h * .04,
+                                          width: h * .05,
+                                          child: const Icon(
+                                            Icons.filter,
+                                            color: Colors.white,
+                                          )),
+                                      const Text("Filter",
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 15,
+                                              fontFamily: "poppins"))
+                                    ],
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () async {
+                                    addframes();
+                                    clicks++;
+                                    if (clicks % 2 == 0) {
+                                      ads.showeditorint();
+                                    }
+                                  },
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                          height: h * .04,
+                                          width: h * .05,
+                                          child: const Icon(
+                                            PhosphorIcons.frameCorners,
+                                            color: Colors.white,
+                                          )),
+                                      const Text("Frame",
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 15,
+                                              fontFamily: "poppins"))
+                                    ],
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () async {
+                                    addText();
+                                    clicks++;
+                                    if (clicks % 2 == 0) {
+                                      ads.showeditorint();
+                                    }
+                                  },
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                          height: h * .04,
+                                          width: h * .05,
+                                          child: const Icon(
+                                            PhosphorIcons.textAa,
+                                            color: Colors.white,
+                                          )),
+                                      const Text("Text",
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 15,
+                                              fontFamily: "poppins"))
+                                    ],
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () async {
+                                    addSticker();
+                                    clicks++;
+                                    if (clicks % 2 == 0) {
+                                      ads.showeditorint();
+                                    }
+                                  },
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                          height: h * .04,
+                                          width: h * .05,
+                                          child: const Icon(
+                                            PhosphorIcons.smileySticker,
+                                            color: Colors.white,
+                                          )),
+                                      const Text("Sticker",
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 15,
+                                              fontFamily: "poppins"))
+                                    ],
+                                  ),
+                                ),
+
+                                // Free-style drawing
+                              ],
+                            ),
+                          ),
+                        ))),
           ),
         ),
       ),
@@ -428,12 +643,39 @@ class _ImageEditorState extends State<ImageEditor> {
               imagesLinks: frameslist,
             ));
     if (imageLink == null) {
-      EasyLoading.dismiss();
       return;
     } else {
       controller.addImage(
           await AssetImage(imageLink).image, const Size(100, 100));
-      EasyLoading.dismiss();
+      // SomeDialog(
+      //     appName: "appname".tr(),
+      //     context: context,
+      //     path: "assets/images/sparrow.png",
+      //     mode: SomeMode.Asset,
+      //     content: "addframedes".tr(),
+      //     title: "addframe".tr(),
+      //     submit: () async {
+      //       controller.addImage(
+      //           await AssetImage(imageLink).image, const Size(100, 100));
+      //       var path = await pickImage(ImageSource.gallery);
+      //       if (path == '') {
+      //       } else {
+      //         var cpath = await imageCropperView(path);
+      //         if (cpath == "") {
+      //         } else {
+      //           controller.addImage(
+      //               await FileImage(File(cpath)).image, const Size(100, 100));
+      //         }
+      //       }
+      //     },
+      //     cancel: () async {
+      //     },
+      //     buttonConfig: ButtonConfig(
+      //       buttonCancelColor: Colors.red,
+      //       buttonDoneColor: Colors.green,
+      //       labelCancelColor: Colors.white,
+      //       labelDoneColor: Colors.white,
+      //     ));
     }
   }
 
@@ -461,7 +703,7 @@ class _ImageEditorState extends State<ImageEditor> {
     });
   }
 
-  void setTextColor(double hue) {
+  setTextColor(double hue) {
     controller.textStyle = controller.textStyle
         .copyWith(color: HSVColor.fromAHSV(1, hue, 1, 1).toColor());
   }
@@ -471,7 +713,11 @@ class _ImageEditorState extends State<ImageEditor> {
   }
 
   Future<void> renderAndDisplayImage() async {
-    if (backgroundImage == null) return;
+    if (backgroundImage == null) {
+      EasyLoading.dismiss();
+      return;
+    }
+
     final backgroundImageSize = Size(
         backgroundImage!.width.toDouble(), backgroundImage!.height.toDouble());
     final imageFuture = await controller
@@ -479,7 +725,8 @@ class _ImageEditorState extends State<ImageEditor> {
         .then<Uint8List?>((ui.Image image) => image.pngBytes);
     SaveController().saveImage(imageFuture);
     EasyLoading.showToast("Image saved Successfully");
-    Navigator.pushReplacement(
+    EasyLoading.dismiss();
+    Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => MyAblum(
@@ -561,9 +808,9 @@ class SelectStickerImageDialog extends StatelessWidget {
                           child: CachedNetworkImage(
                             imageUrl: imageLink,
                             placeholder: (context, url) {
-                              return const Center(
+                              return Center(
                                   child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: appbarcolor,
                                 strokeWidth: 2,
                               ));
                             },
@@ -612,7 +859,6 @@ class SelectFrameImageDialog extends StatelessWidget {
                     for (final imageLink in imagesLinks)
                       InkWell(
                         onTap: () async {
-                          await EasyLoading.show();
                           Navigator.pop(context, imageLink);
                         },
                         child: FractionallySizedBox(
@@ -636,3 +882,125 @@ class SelectFrameImageDialog extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+//old bottom
+
+
+   // bottomNavigationBar: Padding(
+              //   padding: const EdgeInsets.only(bottom: 8.0),
+              //   child: Container(
+              //     margin: EdgeInsets.symmetric(horizontal: w * .08),
+              //     height: h * .12,
+              //     width: w * .8,
+              //     color: primarycolor,
+              //     child: Stack(
+              //       fit: StackFit.expand,
+              //       alignment: Alignment.center,
+              //       children: [
+              //         Image.asset("assets/images/editortoffee.png"),
+              //         Container(
+              //           height: h * .12,
+              //           width: w * .8,
+              //           child: Row(
+              //             mainAxisAlignment: MainAxisAlignment.center,
+              //             children: [
+              //               GestureDetector(
+              //                 onTap: () {
+              //                   addText();
+              //                   clicks++;
+              //                   if (clicks % 2 == 0) {
+              //                     ads.showeditorint();
+              //                   }
+              //                 },
+              //                 child: Padding(
+              //                   padding: const EdgeInsets.only(
+              //                       left: 25.0, bottom: 5),
+              //                   child: Column(
+              //                     mainAxisAlignment: MainAxisAlignment.center,
+              //                     crossAxisAlignment: CrossAxisAlignment.center,
+              //                     children: [
+              //                       const Icon(
+              //                         PhosphorIcons.textT,
+              //                         color: Colors.white,
+              //                         size: 24,
+              //                       ),
+              //                       Text(
+              //                         "Text".tr(),
+              //                         style: const TextStyle(
+              //                             color: Colors.white, fontSize: 15),
+              //                       ),
+              //                     ],
+              //                   ),
+              //                 ),
+              //               ),
+              //               const Spacer(),
+              //               GestureDetector(
+              //                 onTap: () {
+              //                   addframes();
+              //                   clicks++;
+              //                   if (clicks % 2 == 0) {
+              //                     ads.showeditorint();
+              //                   }
+              //                 },
+              //                 child: Padding(
+              //                   padding: const EdgeInsets.only(
+              //                       left: 15.0, bottom: 5),
+              //                   child: Column(
+              //                     mainAxisAlignment: MainAxisAlignment.center,
+              //                     crossAxisAlignment: CrossAxisAlignment.center,
+              //                     children: [
+              //                       const Icon(
+              //                         PhosphorIcons.frameCorners,
+              //                         color: Colors.white,
+              //                         size: 24,
+              //                       ),
+              //                       Text(
+              //                         "Frame".tr(),
+              //                         style: const TextStyle(
+              //                             color: Colors.white, fontSize: 15),
+              //                       ),
+              //                     ],
+              //                   ),
+              //                 ),
+              //               ),
+              //               const Spacer(),
+              //               GestureDetector(
+              //                 onTap: () {
+              //                   addSticker();
+              //                   clicks++;
+              //                   if (clicks % 2 == 0) {
+              //                     ads.showeditorint();
+              //                   }
+              //                 },
+              //                 child: Padding(
+              //                   padding: const EdgeInsets.only(
+              //                       right: 22.0, bottom: 5),
+              //                   child: Column(
+              //                     mainAxisAlignment: MainAxisAlignment.center,
+              //                     crossAxisAlignment: CrossAxisAlignment.center,
+              //                     children: [
+              //                       const Icon(
+              //                         PhosphorIcons.smileySticker,
+              //                         color: Colors.white,
+              //                         size: 24,
+              //                       ),
+              //                       Text(
+              //                         "Sticker".tr(),
+              //                         style: const TextStyle(
+              //                             color: Colors.white, fontSize: 15),
+              //                       ),
+              //                     ],
+              //                   ),
+              //                 ),
+              //               ),
+              //             ],
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),

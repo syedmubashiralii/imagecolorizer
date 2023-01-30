@@ -1,11 +1,16 @@
 import 'dart:io';
+import 'package:dioldifi/Controllers/LoginSignUpController.dart';
 import 'package:dioldifi/UI/AlbumPage.dart';
+import 'package:dioldifi/UI/LoginPage.dart';
 import 'package:dioldifi/Utils/Constants.dart';
 import 'package:dioldifi/Utils/Exitdialog.dart';
 import 'package:dioldifi/Utils/route.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import '../Controllers/Ads_Controller.dart';
+import '../Controllers/CoinsController.dart';
 import '../UI/HomePage.dart';
 
 class MainDrawer extends StatefulWidget {
@@ -17,10 +22,25 @@ class MainDrawer extends StatefulWidget {
 
 class MainDrawerState extends State<MainDrawer> {
   bool isclickedpress = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
+  }
+
+  getads() {
+    final ads = Provider.of<GetAds>(context, listen: false);
+    if (ads.albumint == null) {
+      ads.Createalbuminiterstitial();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
+    final ads = Provider.of<GetAds>(context);
     return Drawer(
       width: w * .7,
       child: Container(
@@ -45,7 +65,7 @@ class MainDrawerState extends State<MainDrawer> {
                     height: h * .01,
                   ),
                   Text(
-                    "Color Magic Pro",
+                    "appname".tr(),
                     style: TextStyle(
                       fontSize: 22,
                       fontFamily: "trajanbold",
@@ -56,16 +76,19 @@ class MainDrawerState extends State<MainDrawer> {
                   SizedBox(
                     height: h * .01,
                   ),
-                  Text(
-                    textAlign: TextAlign.center,
-                    "Bring new life to old black and white photos & videos  with our easy-to-use colorization tool",
-                    style: TextStyle(
-                      letterSpacing: 1.0,
-                      fontFamily: "inter",
-                      fontSize: 12,
-                      color: secondarycolor,
-                      fontWeight: FontWeight.normal,
-                      fontStyle: FontStyle.normal,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Text(
+                      textAlign: TextAlign.center,
+                      "slogan".tr(),
+                      style: TextStyle(
+                        letterSpacing: 1.0,
+                        fontFamily: "inter",
+                        fontSize: 12,
+                        color: secondarycolor,
+                        fontWeight: FontWeight.normal,
+                        fontStyle: FontStyle.normal,
+                      ),
                     ),
                   ),
                 ],
@@ -75,31 +98,39 @@ class MainDrawerState extends State<MainDrawer> {
               height: h * .06,
             ),
             items(
-                text: "My Album",
+                text: "myalbum".tr(),
                 ic: Icons.photo_album_outlined,
                 ontap: () {
-                  Navigator.of(context).push(createRoute( MyAblum(isvideo: false,)));
+                  if (Provider.of<coinsController>(context, listen: false)
+                          .isadfree ==
+                      false) {
+                    ads.showalbumint();
+                  }
+
+                  Navigator.of(context).push(createRoute(MyAblum(
+                    isvideo: false,
+                  )));
                 }),
             items(
-                text: "Privacy Policy",
+                text: "privacy".tr(),
                 ic: Icons.privacy_tip_outlined,
                 ontap: () async {
                   if (Platform.isAndroid) {
                     launchUrl(Uri.parse(
-                        "https://sites.google.com/view/cardashtranslator/home"));
+                        "https://sites.google.com/view/color-magic-pro/privacy_policy?pli=1"));
                   } else if (Platform.isIOS) {
                     launchUrl(Uri.parse(
-                        "https://sites.google.com/view/autoread/privacy"));
+                        "https://sites.google.com/view/color-magic-privacy-policy/home"));
                   }
                 }),
             Visibility(
               visible: Platform.isAndroid,
               child: items(
-                  text: "More Apps",
+                  text: "more".tr(),
                   ic: Icons.apps,
                   ontap: () async {
                     var url =
-                        'https://play.google.com/store/apps/dev?id=4730059111577040107';
+                        'https://play.google.com/store/apps/dev?id=7229798272352696433';
                     if (await canLaunchUrl(Uri.parse(url))) {
                       await launchUrl(
                         Uri.parse(url),
@@ -111,11 +142,10 @@ class MainDrawerState extends State<MainDrawer> {
             Visibility(
               visible: Platform.isAndroid,
               child: items(
-                  text: "Rate Us",
+                  text: "rate".tr(),
                   ic: Icons.thumb_up_alt_rounded,
                   ontap: () async {
-                    var url =
-                        'https://play.google.com/store/apps/details?id=com.appexsoft.autoread.cardashboard.translator';
+                    var url = '';
                     if (await canLaunchUrl(Uri.parse(url))) {
                       await launchUrl(
                         Uri.parse(url),
@@ -125,20 +155,20 @@ class MainDrawerState extends State<MainDrawer> {
                   }),
             ),
             items(
-                text: "Feedback",
+                text: "feedback".tr(),
                 ic: Icons.feedback_outlined,
                 ontap: () {
                   if (Platform.isAndroid) {
                     launchUrl(Uri(
                       scheme: 'mailto',
-                      path: 'appexsoft@gmail.com',
-                      query: 'AutoRead',
+                      path: 'chrismaapps@gmail.com',
+                      query: 'Color Magic Pro',
                     ));
                   } else if (Platform.isIOS) {
                     launchUrl(Uri(
                       scheme: 'mailto',
                       path: 'skhastech@gmail.com',
-                      query: 'AutoRead',
+                      query: 'Color Magic Pro',
                     ));
                   }
                 }),
@@ -146,10 +176,13 @@ class MainDrawerState extends State<MainDrawer> {
             Align(
               alignment: Alignment.bottomCenter,
               child: items(
-                  text: "Exit",
+                  text: "exit".tr(),
                   ic: Icons.exit_to_app,
                   ontap: () {
-                    ExitDialog(context);
+                    LoginSignup().SignOut();
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => Login()));
+                    //ExitDialog(context);
                   }),
             ),
             SizedBox(

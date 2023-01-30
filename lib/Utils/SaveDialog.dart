@@ -32,6 +32,7 @@ class SomeDialog {
   final double imageHeight;
   final double imageWidth;
   final Function submit;
+   var cancel;
   final BuildContext context;
   String appName;
   ButtonConfig buttonConfig;
@@ -44,6 +45,7 @@ class SomeDialog {
       required this.title,
       required this.content,
       required this.submit,
+       this.cancel,
       required this.mode,
       required this.buttonConfig,
       this.imageHeight = 150,
@@ -156,6 +158,7 @@ class SomeDialog {
                                             children: <Widget>[
                                               InkWell(
                                                 onTap: () {
+                                                  cancel();
                                                   Navigator.pop(context);
                                                 },
                                                 child: Container(

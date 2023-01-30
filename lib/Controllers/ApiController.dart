@@ -13,7 +13,7 @@ ImagesServerRequest(File img, String url) async {
   request.fields['factor'] = "35";
   request.headers.addAll({'Content-type': 'multipart/formdata'});
   try {
-    var res = await request.send().timeout(const Duration(seconds: 30));
+    var res = await request.send().timeout(const Duration(minutes: 5));
     if (res.statusCode == 200) {
       var responseData = await res.stream.toBytes();
       responseString = String.fromCharCodes(responseData);
@@ -44,7 +44,7 @@ videocolorizer(File video, String url) async {
   request.headers.addAll({'Content-type': 'multipart/formdata'});
   print('Sending request...');
   try {
-    var res = await request.send().timeout(const Duration(minutes: 5));
+    var res = await request.send().timeout(const Duration(minutes: 20));
     if (res.statusCode == 200) {
       var responseData = await res.stream.toBytes();
       responseString = String.fromCharCodes(responseData);

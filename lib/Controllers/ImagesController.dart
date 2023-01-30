@@ -43,9 +43,11 @@ class ImagesController with ChangeNotifier {
 
     for (int i = 0; i < recentAssets.length; i++) {
       File? file = await recentAssets[i].file;
+      int duration = recentAssets[i].duration;
       videos.add({
         "path": file!.path,
         "thumbnail": await recentAssets[i].thumbnailData,
+        "duration": duration
       });
     }
     isvideoloading = false;
