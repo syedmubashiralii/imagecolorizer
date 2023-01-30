@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "865165715196",
+    "project_id": "color-magic-pro",
+    "storage_bucket": "color-magic-pro.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:865165715196:android:7beede061f6963394cd979",
+        "android_client_info": {
+          "package_name": "com.charisma.colormagicpro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "865165715196-ro8t0nd11e9rn40tuk7ivminhrj7vi4o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6KGCJdkYJwxX1XetdNR8KDA6xZ0x_HL0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "865165715196-ro8t0nd11e9rn40tuk7ivminhrj7vi4o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
